@@ -1,15 +1,10 @@
+from os import link
 import requests
 import csv
 import re
 from bs4 import BeautifulSoup
 
 class PARSER(object):
-    urls = [
-        'https://kmt5.com.ua/jeystone-jack-series-case-iphone-12-61-12-pro-61-black',
-        'https://kmt5.com.ua/jeystone-jack-series-case-iphone-12-61-12-pro-61-green',
-        'https://kmt5.com.ua/jeystone-jack-series-case-iphone-12-61-12-pro-61-red',
-        'https://kmt5.com.ua/jeystone-jack-series-case-iphone-12-pro-max-67-black'
-    ]
     SOUP = object
     HEADERS = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36', 'accept': '*/*'}
     LINKS=[]
@@ -21,23 +16,23 @@ class PARSER(object):
     product_pictures = ''
     product_description = ''
 
-    def __init__(self, FILE_IN, FILE_OUT) -> None:
+    def __init__(self, IN, OUT) -> None:
         super().__init__()
-        self.FILE_IN = FILE_IN
-        self.FILE_OUT = FILE_OUT
+        self.IN = IN
+        self.OUT = OUT
         self.firstLineCSV()
-        # self.get_section_array()
+        self.getLinksForParsing()
         self.parce_products_links()
         self.save_to_CSV()
 
-    def get_sections_array(self):
+    def getLinksArray(self):
         f = open(self.FILE_IN, "r")
         for i in f:
             self.LINKS.append(i.replace('\n', ''))
         f.close()
 
     def firstLineCSV(self):
-        with open(self.FILE_OUT, 'w', newline='') as file:
+        with open(self.OUT, 'w', newline='') as file:
             writer = csv.writer(file, delimiter=';')
             writer.writerow(['Раздел', 'Название', 'Цена', 'Ссылка на изображение', 'Код товара', 'Подробное описание'])
         file.close()
@@ -47,7 +42,7 @@ class PARSER(object):
         return r
 
     def parce_products_links(self):
-        for link in self.urls:
+        for link in self.LINKS:
             html = self.get_html(link)
             if html.status_code == 200:
                 self.SOUP = BeautifulSoup(html.text, 'html.parser')
@@ -62,12 +57,11 @@ class PARSER(object):
                 self.product_pictures = self.SOUP.find('div', class_='slider-big').find('img', class_='main__image').get('src') # не доделано
                 self.product_description = self.SOUP.find('div', class_='text-description').get_text(strip=True)
 
-                self.SOUP = object
                 self.save_to_CSV()
                 
 
     def save_to_CSV(self):
-        with open(self.FILE_OUT, 'a+', newline='') as file:
+        with open(self.OUT, 'a+', newline='') as file:
             writer = csv.writer(file, delimiter=';')
             writer.writerow([
                 self.product_category,
@@ -78,3 +72,15 @@ class PARSER(object):
                 self.product_description
             ])
         file.close()
+
+    def getLinksForParsing(self):
+        if isinstance(self.IN, list):
+            self.LINKS.extend(self.IN)
+        if isinstance(self.IN, str):
+            try:
+                f = open(self.IN, "r")
+                for i in f:
+                    self.LINKS.append(i.replace('\n', ''))
+                f.close()
+            except:
+                print('Не удалось прочитать файл')

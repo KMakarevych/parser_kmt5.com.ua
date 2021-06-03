@@ -130,3 +130,6 @@ dmypy.json
 
 #Outpu file
 *.csv
+
+#VSCode
+.vscode
