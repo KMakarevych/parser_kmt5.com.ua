@@ -1,4 +1,4 @@
-from parser import PARSER
+from myParser import PARSER
 
 
 urls = [
