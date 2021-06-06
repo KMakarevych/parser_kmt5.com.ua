@@ -11,4 +11,4 @@ FILEIN='sitemap.txt'
 FILEOUT='products.csv'
 
 
-parser = PARSER(urls, FILEOUT)
+parser = PARSER(FILEIN, FILEOUT)

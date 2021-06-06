@@ -134,3 +134,5 @@ dmypy.json
 *.exe
 main.build/
 *.dll
+*.txt
+main.dist/
