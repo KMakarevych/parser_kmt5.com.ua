@@ -128,8 +128,9 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-#Outpu file
+#My rules
 *.csv
-
-#VSCode
 .vscode
+*.exe
+main.build/
+*.dll
