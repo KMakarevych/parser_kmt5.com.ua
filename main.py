@@ -1,14 +1,12 @@
-from parser import PARSER
+from myParser import PARSER
 
 
 urls = [
-    'https://kmt5.com.ua/jeystone-jack-series-case-iphone-12-61-12-pro-61-black',
-    'https://kmt5.com.ua/jeystone-jack-series-case-iphone-12-61-12-pro-61-green',
-    'https://kmt5.com.ua/jeystone-jack-series-case-iphone-12-61-12-pro-61-red',
-    'https://kmt5.com.ua/jeystone-jack-series-case-iphone-12-pro-max-67-black'
+    'https://kmt5.com.ua/stickers-series-tpu-case-samsung-m11-black'
 ]
-FILEIN='sitemap.txt'
+FILEIN='links.txt'
 FILEOUT='products.csv'
 
 
-parser = PARSER(urls, FILEOUT)
+parser = PARSER(FILEIN, FILEOUT)
+

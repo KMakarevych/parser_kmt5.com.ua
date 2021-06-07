@@ -11,7 +11,7 @@ class PARSER(object):
     product_category = ''
     product_name = ''
     product_code = ''
-    product_properties = ''
+    # product_properties = ''
     product_price_usd = ''
     product_pictures = ''
     product_description = ''
@@ -43,19 +43,24 @@ class PARSER(object):
 
     def parce_products_links(self):
         for link in self.LINKS:
+            print(link)
             html = self.get_html(link)
             if html.status_code == 200:
                 self.SOUP = BeautifulSoup(html.text, 'html.parser')
 
                 breadcrumbs = self.SOUP.select('.breadcrumbs > li')                
-                self.product_category = breadcrumbs[-2].get_text()
-                self.product_name = self.SOUP.find('div', class_='box-card_right').find('h1').get_text(strip=True)
+                self.product_category = breadcrumbs[-2].get_text().replace(';',',').replace('$', '').replace('"','')
+                self.product_name = self.SOUP.find('div', class_='box-card_right').find('h1').get_text(strip=True).replace(';',',').replace('$', '').replace('"','')
                 product_code = self.SOUP.find('div', class_='box-card_code').get_text(strip=True)
-                self.product_code = re.sub(r'Код*:', ':', product_code).split(':')[1]
-                self.product_properties = self.SOUP.find('ul', class_='list-description') # не доделано
-                self.product_price_usd = self.SOUP.find('div', class_='box-card_hryvnia').get_text(strip=True).replace('$','')
-                self.product_pictures = self.SOUP.find('div', class_='slider-big').find('img', class_='main__image').get('src') # не доделано
-                self.product_description = self.SOUP.find('div', class_='text-description').get_text(strip=True)
+                self.product_code = re.sub(r'Код*:', ':', product_code).split(':')[1].replace(';',',').replace('$', '').replace('"','')
+                # self.product_properties = self.SOUP.find('ul', class_='list-description') # не доделано
+                self.product_price_usd = self.SOUP.find('div', class_='box-card_hryvnia').get_text(strip=True).replace(';',',').replace('$', '').replace('"','')
+                self.product_pictures = self.SOUP.find('div', class_='slider-big').find('img', class_='main__image').get('src').replace(';',',').replace('$', '').replace('"','') # не доделано
+                product_description = self.SOUP.find('div', class_='text-description').get_text(strip=True).replace(';',',').replace('$', '').replace('"','')
+                if product_description == '':
+                    self.product_description = 'Описание отсутствует.'
+                else:
+                    self.product_description = self.SOUP.find('div', class_='text-description').get_text(strip=True).replace(';',',').replace('$', '').replace('"','')
 
                 self.save_to_CSV()
                 
