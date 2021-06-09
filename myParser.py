@@ -24,10 +24,6 @@ class PARSER(object):
         self.getLinksFromCategories()
         # Из списка ссылок в файле обьявим массив ссылок с пагинацией и запишем в файл categoriesWithPagination.txt
         # После выполнения появится файл со ссылками с учётом пагинации и метод класса LINKS
-        # SYNC
-        # self.getPagination()
-
-        # ASYNC
         ioloop = asyncio.get_event_loop()
         ioloop.run_until_complete(self.asynchronousGetPagination())
         with open('categoriesWithPagination.txt', 'w') as file:
@@ -37,12 +33,9 @@ class PARSER(object):
         # Получим ссылки на сстраницы товаров из метода LINKS
         # На выходе переопределим метод LINKS и занесём в него список ссылок
         # Также запишем ссылки в файл
-        ######   SYNC   ######
-        # self.getProductsLinks()
-        ######   ASYNC   ######
         ioloop = asyncio.get_event_loop()
         ioloop.run_until_complete(self.asynchronousGetLinks())
-        with open('productsLinksTest.txt', 'w') as file:
+        with open('productsLinks.txt', 'w') as file:
             for i in self.productsLinks:
                 file.write(i + '\n')
         file.close()
@@ -63,31 +56,6 @@ class PARSER(object):
     def getHtml(self, url, params=None):
         r = requests.get(url, headers=self.HEADERS, params=params)
         return r
-
-    # def parseData(self):
-    #     self.PRODUCTS = []
-    #     for link in self.LINKS:
-    #         print(link)
-    #         product = {}
-    #         html = self.getHtml(link)
-    #         if html.status_code == 200:
-    #             soup = BeautifulSoup(html.text, 'html.parser')
-    #             breadcrumbs = soup.select('.breadcrumbs > li')   
-    #             product_code = soup.find('div', class_='box-card_code').get_text(strip=True)
-    #             product_description = soup.find('div', class_='text-description').get_text(strip=True).replace(';',',')
-             
-    #             product['breadcrumbs'] = breadcrumbs
-    #             product['category'] = breadcrumbs[-2].get_text().replace(';',',')
-    #             product['name'] = soup.find('div', class_='box-card_right').find('h1').get_text(strip=True).replace(';',',')
-    #             product['code'] = re.sub(r'Код*:', ':', product_code).split(':')[1].replace(';',',')
-    #             product['price'] = soup.find('div', class_='box-card_hryvnia').get_text(strip=True).replace('$', '')
-    #             product['pic_link'] = soup.find('div', class_='slider-big').find('img', class_='main__image').get('src')
-    #             if product_description == '':
-    #                 product['description'] = 'Описание отсутствует.'
-    #             else:
-    #                 product['description'] = self.product_description = soup.find('div', class_='text-description').get_text(strip=True).replace(';',',')
-                
-    #             self.PRODUCTS.extend([product])              
 
     def saveToCsv(self):
         for i in self.PRODUCTS:
@@ -118,43 +86,6 @@ class PARSER(object):
             self.categories = array
         except:
             print('Не удалось прочитать файл')
-
-    # def getPagination(self):
-    #     counter = 1
-    #     array = []
-    #     for link in self.LINKS:
-    #         hmtl = self.getHtml(link, 'page=' + str(counter))
-    #         if hmtl.status_code == 200:
-    #             soup = BeautifulSoup(hmtl.text, 'html.parser')
-    #             array.append(link)
-    #             while len(soup.find_all('div', class_='list-catalog_item')) > 0:
-    #                 counter = counter + 1
-    #                 hmtl = self.getHtml(link, 'page=' + str(counter))
-    #                 soup = BeautifulSoup(hmtl.text, 'html.parser')
-    #                 if len(soup.find_all('div', class_='list-catalog_item')) > 0:
-    #                     array.append(link + '?page=' + str(counter))
-    #             else:
-    #                 pass
-    #     self.LINKS = array
-    #     with open('categoriesWithPagination.txt', 'w') as file:
-    #         for i in self.LINKS:
-    #             file.write(i + '\n')
-    #     file.close()
-
-    # def getProductsLinks(self):
-    #     array = []
-    #     links = []
-    #     for i in self.LINKS:
-    #         hmtl = self.getHtml(i)
-    #         soup = BeautifulSoup(hmtl.text, 'html.parser')
-    #         array = soup.find_all('div', class_='list-catalog_item')
-    #         for item in array:
-    #             links.extend([item.find('a').get('href')])
-    #     self.LINKS = links
-    #     with open('productsLinksTest.txt', 'w') as file:
-    #         for i in self.LINKS:
-    #             file.write(i + '\n')
-    #     file.close()
 
     async def parserDataAsync(self, url):
         session = aiohttp.ClientSession()
