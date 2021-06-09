@@ -157,37 +157,38 @@ class PARSER(object):
     #     file.close()
 
     async def parserDataAsync(self, url):
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                html = await response.text()
-                
-                product = {}
-                soup = BeautifulSoup(html, 'html.parser')
-                breadcrumbs = soup.select('.breadcrumbs > li')   
-                product_code = soup.find('div', class_='box-card_code').get_text(strip=True)
-                product_description = soup.find('div', class_='text-description').get_text(strip=True).replace(';',',')
-             
-                product['breadcrumbs'] = breadcrumbs
-                product['category'] = breadcrumbs[-2].get_text().replace(';',',')
-                product['name'] = soup.find('div', class_='box-card_right').find('h1').get_text(strip=True).replace(';',',')
-                product['code'] = re.sub(r'Код*:', ':', product_code).split(':')[1].replace(';',',')
-                product['price'] = soup.find('div', class_='box-card_hryvnia').get_text(strip=True).replace('$', '')
-                product['pic_link'] = soup.find('div', class_='slider-big').find('img', class_='main__image').get('src')
-                if product_description == '':
-                    product['description'] = 'Описание отсутствует.'
-                else:
-                    product['description'] = self.product_description = soup.find('div', class_='text-description').get_text(strip=True).replace(';',',')
-                self.PRODUCTS.extend([product])
+        session = aiohttp.ClientSession()
+        async with session.get(url) as response:
+            html = await response.text()
+            
+            product = {}
+            soup = BeautifulSoup(html, 'html.parser')
+            breadcrumbs = soup.select('.breadcrumbs > li')   
+            product_code = soup.find('div', class_='box-card_code').get_text(strip=True)
+            product_description = soup.find('div', class_='text-description').get_text(strip=True).replace(';',',')
+            
+            product['breadcrumbs'] = breadcrumbs
+            product['category'] = breadcrumbs[-2].get_text().replace(';',',')
+            product['name'] = soup.find('div', class_='box-card_right').find('h1').get_text(strip=True).replace(';',',')
+            product['code'] = re.sub(r'Код*:', ':', product_code).split(':')[1].replace(';',',')
+            product['price'] = soup.find('div', class_='box-card_hryvnia').get_text(strip=True).replace('$', '')
+            product['pic_link'] = soup.find('div', class_='slider-big').find('img', class_='main__image').get('src')
+            if product_description == '':
+                product['description'] = 'Описание отсутствует.'
+            else:
+                product['description'] = self.product_description = soup.find('div', class_='text-description').get_text(strip=True).replace(';',',')
+            self.PRODUCTS.extend([product])
+        await session.close()
 
     async def getProductsLinksAsync(self, url):
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as response:
-                html = await response.text()
-                soup = BeautifulSoup(html, 'html.parser')
-                array = soup.find_all('div', class_='list-catalog_item')
-                array = [item.find('a').get('href') for item in array]
-                self.productsLinks.extend(array)
-
+        session = aiohttp.ClientSession()
+        async with session.get(url) as response:
+            html = await response.text()
+            soup = BeautifulSoup(html, 'html.parser')
+            array = soup.find_all('div', class_='list-catalog_item')
+            array = [item.find('a').get('href') for item in array]
+            self.productsLinks.extend(array)
+        await session.close()
 
     async def getPaginationAsync(self, url):
         session = aiohttp.ClientSession()
@@ -210,7 +211,7 @@ class PARSER(object):
                     pass
             else:
                 pass
-
+        await session.close()
 
     async def asynchronousGetLinks(self):
         start = time.time()
