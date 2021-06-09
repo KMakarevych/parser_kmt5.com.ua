@@ -24,7 +24,9 @@ class PARSER(object):
         self.getProducts()
         # Спарсим данные отдельных товаров из метода LINKS
         # Положим данные в словарь PRODUCTS
-        self.parce_products_links()
+        self.parseProductsLinks()
+        # Заполним файл products.csv данными
+        self.saveToCsv()
 
 
 
@@ -34,16 +36,16 @@ class PARSER(object):
             writer.writerow(['Код_товара', 'Название_позиции', 'Название_позиции_укр', 'Описание', 'Описание_укр', 'Цена', 'Валюта', 'Единица_измерения', 'Ссылка_изображения', 'Наличие', 'Идентификатор_товара'])
         file.close()
 
-    def get_html(self, url, params=None):
+    def getHtml(self, url, params=None):
         r = requests.get(url, headers=self.HEADERS, params=params)
         return r
 
-    def parce_products_links(self):
+    def parseProductsLinks(self):
         self.PRODUCTS = []
         for link in self.LINKS:
             print(link)
             product = {}
-            html = self.get_html(link)
+            html = self.getHtml(link)
             if html.status_code == 200:
                 self.SOUP = BeautifulSoup(html.text, 'html.parser')
                 breadcrumbs = self.SOUP.select('.breadcrumbs > li')   
@@ -61,29 +63,26 @@ class PARSER(object):
                 else:
                     product['description'] = self.product_description = self.SOUP.find('div', class_='text-description').get_text(strip=True).replace(';',',')
                 
-                self.PRODUCTS.append([product])
+                self.PRODUCTS.append([product])              
 
-
-                # self.save_to_CSV()
-                
-
-    def save_to_CSV(self):
-        with open(self.OUT, 'a+', newline='') as file:
-            writer = csv.writer(file, delimiter=';')
-            writer.writerow([
-                self.product_code,
-                self.product_name,
-                '',
-                self.product_description,
-                '',
-                self.product_price_usd,
-                'USD',
-                'шт.',
-                self.product_pictures,
-                '\'+',
-                self.product_code
-            ])
-        file.close()            
+    def saveToCsv(self):
+        for i in self.LINKS:
+            with open(self.OUT, 'a+', newline='') as file:
+                writer = csv.writer(file, delimiter=';')
+                writer.writerow([
+                    i['code'],
+                    i['name'],
+                    '',
+                    i['description'],
+                    '',
+                    i['price'],
+                    'USD',
+                    'шт.',
+                    i['pic_link'],
+                    '\'+',
+                    i['code']
+                ])
+            file.close()            
 
     def getLinks(self):
         try:
@@ -100,13 +99,13 @@ class PARSER(object):
         counter = 1
         array = []
         for link in self.LINKS:
-            self.HTML = self.get_html(link, 'page=' + str(counter))
+            self.HTML = self.getHtml(link, 'page=' + str(counter))
             if self.HTML.status_code == 200:
                 self.SOUP = BeautifulSoup(self.HTML.text, 'html.parser')
                 array.append(link)
                 while len(self.SOUP.find_all('div', class_='list-catalog_item')) > 0:
                     counter = counter + 1
-                    self.HTML = self.get_html(link, 'page=' + str(counter))
+                    self.HTML = self.getHtml(link, 'page=' + str(counter))
                     self.SOUP = BeautifulSoup(self.HTML.text, 'html.parser')
                     if len(self.SOUP.find_all('div', class_='list-catalog_item')) > 0:
                         array.append(link + '?page=' + str(counter))
@@ -122,7 +121,7 @@ class PARSER(object):
         array = []
         links = []
         for i in self.LINKS:
-            self.HTML = self.get_html(i)
+            self.HTML = self.getHtml(i)
             self.SOUP = BeautifulSoup(self.HTML.text, 'html.parser')
             array = self.SOUP.find_all('div', class_='list-catalog_item')
             for item in array:
