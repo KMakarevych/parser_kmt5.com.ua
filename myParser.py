@@ -14,7 +14,7 @@ class PARSER(object):
         self.firstLineCSV()
         # Получим список разделов из файла categories.txt и добавим его в метод LINKS
         # После выполнения в методе LINKS будет список разделов
-        self.getLinks(self.IN)
+        self.getLinks()
         # Из списка ссылок в файле обьявим массив ссылок с пагинацией и запишем в файл categoriesWithPagination.txt
         # После выполнения появится файл со ссылками с учётом пагинации и метод класса LINKS
         self.getPagination()
@@ -63,10 +63,10 @@ class PARSER(object):
                 else:
                     product['description'] = self.product_description = self.SOUP.find('div', class_='text-description').get_text(strip=True).replace(';',',')
                 
-                self.PRODUCTS.append([product])              
+                self.PRODUCTS.extend([product])              
 
     def saveToCsv(self):
-        for i in self.LINKS:
+        for i in self.PRODUCTS:
             with open(self.OUT, 'a+', newline='') as file:
                 writer = csv.writer(file, delimiter=';')
                 writer.writerow([
