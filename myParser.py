@@ -10,17 +10,23 @@ class PARSER(object):
         super().__init__()
         self.HEADERS = {'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/90.0.4430.212 Safari/537.36', 'accept': '*/*'}
         self.IN = IN
-        self.OUT = OUT
+        self.OUT = OUT   
         self.firstLineCSV()
-        self.getLinksForParsing()
+        # Получим список разделов из файла categories.txt и добавим его в метод LINKS
+        # После выполнения в методе LINKS будет список разделов
+        self.getLinks(self.IN)
+        # Из списка ссылок в файле обьявим массив ссылок с пагинацией и запишем в файл categoriesWithPagination.txt
+        # После выполнения появится файл со ссылками с учётом пагинации и метод класса LINKS
+        self.getPagination()
+        # Получим ссылки на сстраницы товаров из метода LINKS
+        # На выходе переопределим метод LINKS и занесём в него список ссылок
+        # Также запишем ссылки в файл
+        self.getProducts()
+        # Спарсим данные отдельных товаров из метода LINKS
+        # Положим данные в словарь PRODUCTS
         self.parce_products_links()
-        self.save_to_CSV()
 
-    def getLinksArray(self):
-        f = open(self.FILE_IN, "r")
-        for i in f:
-            self.LINKS.append(i.replace('\n', ''))
-        f.close()
+
 
     def firstLineCSV(self):
         with open(self.OUT, 'w', newline='') as file:
@@ -33,8 +39,10 @@ class PARSER(object):
         return r
 
     def parce_products_links(self):
+        self.PRODUCTS = []
         for link in self.LINKS:
             print(link)
+            product = {}
             html = self.get_html(link)
             if html.status_code == 200:
                 self.SOUP = BeautifulSoup(html.text, 'html.parser')
@@ -42,17 +50,21 @@ class PARSER(object):
                 product_code = self.SOUP.find('div', class_='box-card_code').get_text(strip=True)
                 product_description = self.SOUP.find('div', class_='text-description').get_text(strip=True).replace(';',',')
              
-                self.product_category = breadcrumbs[-2].get_text().replace(';',',')
-                self.product_name = self.SOUP.find('div', class_='box-card_right').find('h1').get_text(strip=True).replace(';',',')
-                self.product_code = re.sub(r'Код*:', ':', product_code).split(':')[1].replace(';',',')
-                self.product_price_usd = self.SOUP.find('div', class_='box-card_hryvnia').get_text(strip=True).replace('$', '')
-                self.product_pictures = self.SOUP.find('div', class_='slider-big').find('img', class_='main__image').get('src')
+            
+                product['category'] = breadcrumbs[-2].get_text().replace(';',',')
+                product['name'] = self.SOUP.find('div', class_='box-card_right').find('h1').get_text(strip=True).replace(';',',')
+                product['code'] = re.sub(r'Код*:', ':', product_code).split(':')[1].replace(';',',')
+                product['price'] = self.SOUP.find('div', class_='box-card_hryvnia').get_text(strip=True).replace('$', '')
+                product['pic_link'] = self.SOUP.find('div', class_='slider-big').find('img', class_='main__image').get('src')
                 if product_description == '':
-                    self.product_description = 'Описание отсутствует.'
+                    product['description'] = 'Описание отсутствует.'
                 else:
-                    self.product_description = self.SOUP.find('div', class_='text-description').get_text(strip=True).replace(';',',')
+                    product['description'] = self.product_description = self.SOUP.find('div', class_='text-description').get_text(strip=True).replace(';',',')
+                
+                self.PRODUCTS.append([product])
 
-                self.save_to_CSV()
+
+                # self.save_to_CSV()
                 
 
     def save_to_CSV(self):
@@ -71,19 +83,52 @@ class PARSER(object):
                 '\'+',
                 self.product_code
             ])
+        file.close()            
+
+    def getLinks(self):
+        try:
+            array = []
+            f = open(self.IN, "r")
+            for i in f:
+                array.append(i.replace('\n', ''))
+            f.close()
+            self.LINKS = array
+        except:
+            print('Не удалось прочитать файл')
+
+    def getPagination(self):
+        counter = 1
+        array = []
+        for link in self.LINKS:
+            self.HTML = self.get_html(link, 'page=' + str(counter))
+            if self.HTML.status_code == 200:
+                self.SOUP = BeautifulSoup(self.HTML.text, 'html.parser')
+                array.append(link)
+                while len(self.SOUP.find_all('div', class_='list-catalog_item')) > 0:
+                    counter = counter + 1
+                    self.HTML = self.get_html(link, 'page=' + str(counter))
+                    self.SOUP = BeautifulSoup(self.HTML.text, 'html.parser')
+                    if len(self.SOUP.find_all('div', class_='list-catalog_item')) > 0:
+                        array.append(link + '?page=' + str(counter))
+                else:
+                    pass
+        self.LINKS = array
+        with open('categoriesWithPagination.txt', 'w') as file:
+            for i in self.LINKS:
+                file.write(i + '\n')
         file.close()
 
-    def getLinksForParsing(self):
+    def getProducts(self):
         array = []
-        if isinstance(self.IN, list):
-            array.extend(self.IN)
-            self.LINKS = array
-        if isinstance(self.IN, str):
-            try:
-                f = open(self.IN, "r")
-                for i in f:
-                    array.append(i.replace('\n', ''))
-                f.close()
-                self.LINKS = array
-            except:
-                print('Не удалось прочитать файл')
+        links = []
+        for i in self.LINKS:
+            self.HTML = self.get_html(i)
+            self.SOUP = BeautifulSoup(self.HTML.text, 'html.parser')
+            array = self.SOUP.find_all('div', class_='list-catalog_item')
+            for item in array:
+                links.extend([item.find('a').get('href')])
+        self.LINKS = links
+        with open('productsLinksTest.txt', 'w') as file:
+            for i in self.LINKS:
+                file.write(i + '\n')
+        file.close()

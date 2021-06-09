@@ -1,12 +1,13 @@
 from myParser import PARSER
 
 
-urls = [
-    'https://kmt5.com.ua/stickers-series-tpu-case-samsung-m11-black'
-]
-FILEIN='test_links.txt'
+FILEINTEST='categoriesTest.txt'
+FILEIN='categories.txt'
+FILEOUTTEST='productsTest.csv'
 FILEOUT='products.csv'
 
 
+# parser = PARSER(FILEINTEST, FILEOUTTEST)
 parser = PARSER(FILEIN, FILEOUT)
 
+pass
