@@ -30,6 +30,7 @@ class PARSER(object):
             for i in self.categoriesWithPagination:
                 file.write(i + '\n')
         file.close()
+        self.categories.clear()
         # Получим ссылки на сстраницы товаров из метода LINKS
         # На выходе переопределим метод LINKS и занесём в него список ссылок
         # Также запишем ссылки в файл
@@ -39,8 +40,10 @@ class PARSER(object):
             for i in self.productsLinks:
                 file.write(i + '\n')
         file.close()
+        self.categoriesWithPagination.clear()
         
-        self.productsLinksSeparated = [self.productsLinks[d:d+50] for d in range(0, len(self.productsLinks), 50)]
+        self.productsLinksSeparated = [self.productsLinks[d:d+20] for d in range(0, len(self.productsLinks), 20)]
+        self.productsLinks.clear()
         # Спарсим данные отдельных товаров из метода LINKS
         # # Положим данные в словарь PRODUCTS
         for i in self.productsLinksSeparated:
@@ -48,6 +51,7 @@ class PARSER(object):
             ioloop = asyncio.get_event_loop()
             ioloop.run_until_complete(self.asynchronousParseData(i))
             self.saveToCsv()
+        
         
 
     def firstLineCSV(self):
@@ -99,14 +103,13 @@ class PARSER(object):
             
             product = {}
             soup = BeautifulSoup(html, 'html.parser')
-            product_code = soup.find('div', class_='box-card_code').get_text(strip=True)
             
             product['breadcrumbs'] = [i.get_text() for i in soup.select('.breadcrumbs > li')]
             del product['breadcrumbs'][-1]
             product['category'] = product['breadcrumbs'][-1]
             product['breadcrumbs'] = ', '.join(product['breadcrumbs'])
             product['name'] = soup.find('div', class_='box-card_right').find('h1').get_text(strip=True).replace(';',',')
-            product['code'] = re.sub(r'Код*:', ':', product_code).split(':')[1].replace(';',',')
+            product['code'] = re.sub(r'Код*:', ':', soup.find('div', class_='box-card_code').get_text(strip=True)).split(':')[1].replace(';',',')
             product['price'] = soup.find('div', class_='box-card_hryvnia').get_text(strip=True).replace('$', '')
             product['pic_link'] = soup.find('div', class_='slider-big').find('img', class_='main__image').get('src')
             if soup.find('div', class_='text-description').get_text(strip=True).replace(';',',') == '':
