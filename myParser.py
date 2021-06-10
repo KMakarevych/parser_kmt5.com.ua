@@ -40,12 +40,14 @@ class PARSER(object):
                 file.write(i + '\n')
         file.close()
         
+        self.productsLinksSeparated = [self.productsLinks[d:d+100] for d in range(0, len(self.productsLinks), 100)]
         # Спарсим данные отдельных товаров из метода LINKS
-        # Положим данные в словарь PRODUCTS
-        ioloop = asyncio.get_event_loop()
-        ioloop.run_until_complete(self.asynchronousParseData())
-        # Заполним CSV файл данными из метода PRODUCTS
-        self.saveToCsv()
+        # # Положим данные в словарь PRODUCTS
+        for i in self.productsLinksSeparated:
+            ioloop = asyncio.get_event_loop()
+            ioloop.run_until_complete(self.asynchronousParseData(i))
+            self.saveToCsv()
+        
 
     def firstLineCSV(self):
         with open(self.OUT, 'w', newline='') as file:
@@ -146,20 +148,23 @@ class PARSER(object):
 
     async def asynchronousGetLinks(self):
         start = time.time()
+        print("Получим список ссылок на товары")
         tasks = [asyncio.ensure_future(
             self.getProductsLinksAsync(i)) for i in self.categoriesWithPagination]
         await asyncio.wait(tasks)
         print("Process took: {:.2f} seconds".format(time.time() - start))
         
-    async def asynchronousParseData(self):
+    async def asynchronousParseData(self, array):
         start = time.time()
+        print("Парсим данные")
         tasks = [asyncio.ensure_future(
-            self.parserDataAsync(i)) for i in self.productsLinks]
+            self.parserDataAsync(i)) for i in array]
         await asyncio.wait(tasks)
         print("Process took: {:.2f} seconds".format(time.time() - start))
 
     async def asynchronousGetPagination(self):
         start = time.time()
+        print("Получаем ссылки пагинации")
         tasks = [asyncio.ensure_future(
             self.getPaginationAsync(i)) for i in self.categories]
         await asyncio.wait(tasks)
