@@ -40,10 +40,11 @@ class PARSER(object):
                 file.write(i + '\n')
         file.close()
         
-        self.productsLinksSeparated = [self.productsLinks[d:d+100] for d in range(0, len(self.productsLinks), 100)]
+        self.productsLinksSeparated = [self.productsLinks[d:d+50] for d in range(0, len(self.productsLinks), 50)]
         # Спарсим данные отдельных товаров из метода LINKS
         # # Положим данные в словарь PRODUCTS
         for i in self.productsLinksSeparated:
+            self.PRODUCTS.clear()
             ioloop = asyncio.get_event_loop()
             ioloop.run_until_complete(self.asynchronousParseData(i))
             self.saveToCsv()
@@ -52,7 +53,7 @@ class PARSER(object):
     def firstLineCSV(self):
         with open(self.OUT, 'w', newline='') as file:
             writer = csv.writer(file, delimiter=';')
-            writer.writerow(['Код_товара', 'Название_позиции', 'Название_позиции_укр', 'Описание', 'Описание_укр', 'Цена', 'Валюта', 'Единица_измерения', 'Ссылка_изображения', 'Наличие', 'Идентификатор_товара'])
+            writer.writerow(['Код_товара', 'Название_позиции', 'Название_позиции_укр', 'Описание', 'Описание_укр', 'Цена', 'Валюта', 'Единица_измерения', 'Ссылка_изображения', 'Наличие', 'Идентификатор_товара', 'Категория'])
         file.close()
 
     def getHtml(self, url, params=None):
@@ -74,7 +75,8 @@ class PARSER(object):
                     'шт.',
                     i['pic_link'],
                     '\'+',
-                    i['code']
+                    i['code'],
+                    i['category']
                 ])
             file.close()            
 
