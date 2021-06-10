@@ -53,7 +53,7 @@ class PARSER(object):
     def firstLineCSV(self):
         with open(self.OUT, 'w', newline='') as file:
             writer = csv.writer(file, delimiter=';')
-            writer.writerow(['Код_товара', 'Название_позиции', 'Название_позиции_укр', 'Описание', 'Описание_укр', 'Цена', 'Валюта', 'Единица_измерения', 'Ссылка_изображения', 'Наличие', 'Идентификатор_товара', 'Категория'])
+            writer.writerow(['Код_товара', 'Название_позиции', 'Название_позиции_укр', 'Описание', 'Описание_укр', 'Цена', 'Валюта', 'Единица_измерения', 'Ссылка_изображения', 'Наличие', 'Идентификатор_товара', 'Категория', 'Полный путь'])
         file.close()
 
     def getHtml(self, url, params=None):
@@ -76,7 +76,8 @@ class PARSER(object):
                     i['pic_link'],
                     '\'+',
                     i['code'],
-                    i['category']
+                    i['category'],
+                    i['breadcrumbs']
                 ])
             file.close()            
 
@@ -98,17 +99,17 @@ class PARSER(object):
             
             product = {}
             soup = BeautifulSoup(html, 'html.parser')
-            breadcrumbs = soup.select('.breadcrumbs > li')   
             product_code = soup.find('div', class_='box-card_code').get_text(strip=True)
-            product_description = soup.find('div', class_='text-description').get_text(strip=True).replace(';',',')
             
-            product['breadcrumbs'] = breadcrumbs
-            product['category'] = breadcrumbs[-2].get_text().replace(';',',')
+            product['breadcrumbs'] = [i.get_text() for i in soup.select('.breadcrumbs > li')]
+            del product['breadcrumbs'][-1]
+            product['category'] = product['breadcrumbs'][-1]
+            product['breadcrumbs'] = ', '.join(product['breadcrumbs'])
             product['name'] = soup.find('div', class_='box-card_right').find('h1').get_text(strip=True).replace(';',',')
             product['code'] = re.sub(r'Код*:', ':', product_code).split(':')[1].replace(';',',')
             product['price'] = soup.find('div', class_='box-card_hryvnia').get_text(strip=True).replace('$', '')
             product['pic_link'] = soup.find('div', class_='slider-big').find('img', class_='main__image').get('src')
-            if product_description == '':
+            if soup.find('div', class_='text-description').get_text(strip=True).replace(';',',') == '':
                 product['description'] = 'Описание отсутствует.'
             else:
                 product['description'] = self.product_description = soup.find('div', class_='text-description').get_text(strip=True).replace(';',',')

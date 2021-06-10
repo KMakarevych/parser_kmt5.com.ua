@@ -7,7 +7,7 @@ FILEOUTTEST='productsTest.csv'
 FILEOUT='products.csv'
 
 
-parser = PARSER(FILEINTEST, FILEOUTTEST)
-# parser = PARSER(FILEIN, FILEOUT)
+# parser = PARSER(FILEINTEST, FILEOUTTEST)
+parser = PARSER(FILEIN, FILEOUT)
 
 pass
